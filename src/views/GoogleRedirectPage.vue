@@ -15,13 +15,13 @@ export default {
             } catch (error) {
                 if (error.response.status === 400) {
                     // Обработка ошибки при авторизации через Google
-                    console.error('Invalid authorization code received from Google:', error.response.data);
+                    console.error('Неверный код авторизации, полученный от Google', error.response.data);
                     this.$router.replace({ name: 'login' });
                 }
             }
         } else {
             // Обработка случаев, когда код не был получен от Google
-            console.error('No authorization code received from Google.');
+            console.error('Код авторизации от Google не получен.');
         }
     }
 };

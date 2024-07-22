@@ -9,7 +9,7 @@
                         </v-avatar>
                     </v-col>
                     <v-col cols="mt-3" flex-grow-1>
-                        <v-text-field class="mx-3" label="Search book by title" flat hide-details
+                        <v-text-field class="mx-3" label="Введите название книги" flat hide-details
                             prepend-icon="mdi-magnify" solo v-model="search" @input="searchBooks">
                         </v-text-field>
                     </v-col>
@@ -17,36 +17,36 @@
                     <v-col cols="auto" class="d-flex flex-column align-center login-container" @click="handleLogin"
                         v-if="!authorized">
                         <v-icon class="login-icon">mdi-account-outline</v-icon>
-                        <span class="login-text">Login</span>
+                        <span class="login-text">Войти</span>
                     </v-col>
                     <v-col cols="auto" class="d-flex flex-column align-center login-container" @click="handleLogin"
                         v-if="authorized">
                         <v-icon class="login-icon">mdi-account-outline</v-icon>
-                        <span class="login-text">Profile</span>
+                        <span class="login-text">Профиль</span>
                     </v-col>
                     <v-col cols="auto" class="d-flex flex-column align-center login-container" v-if="authorized">
                         <v-dialog v-model="dialog" width="500">
                             <template v-slot:activator="{ on, attrs }">
                                 <v-icon class="login-icon" v-bind="attrs" v-on="on">mdi-logout-variant</v-icon>
-                                <span class="login-text" v-bind="attrs" v-on="on">Logout</span>
+                                <span class="login-text" v-bind="attrs" v-on="on">Выйти</span>
                             </template>
                             <v-card>
                                 <v-card-title class="text-h6 grey lighten-2 text-center ">
-                                    LOGOUT
+                                    Выход
                                 </v-card-title>
 
                                 <v-card-text class="text-justify text-center font-weight-regular" id="card-text">
-                                    Do you really want to logout?
+                                    Вы действительно хотите выйти?
                                 </v-card-text>
                                 <v-divider></v-divider>
 
                                 <v-card-actions>
                                     <v-spacer></v-spacer>
                                     <v-btn depressed color="error" text @click="dialog = false">
-                                        Cancel
+                                        Нет
                                     </v-btn>
                                     <v-btn depressed color="success" text @click="handleLogout">
-                                        Submit
+                                        Да
                                     </v-btn>
                                 </v-card-actions>
                             </v-card>

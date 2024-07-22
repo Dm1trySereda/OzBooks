@@ -33,8 +33,8 @@ export default {
     data() {
         return {
             tab: 0,
-            login: "LOG IN",
-            signIn: "SIGN IN",
+            login: "Вход",
+            signIn: "Регистрация",
             showOtp: false,
             loginFormData: {}
         };

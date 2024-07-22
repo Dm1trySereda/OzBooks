@@ -5,7 +5,7 @@
                 <v-list-item>
                     <v-list-item-content>
                         <v-list-item-title class="text-h6">
-                            Sort by
+                          Сортировать по
                         </v-list-item-title>
                     </v-list-item-content>
                 </v-list-item>
@@ -43,14 +43,13 @@
                     <v-card-title style="padding-bottom: 0; padding-top: 0;">
                         <div id="discount-button-none" v-if="book.priceOld < book.priceNew"
                             class="text-h6 text-sm-left font-weight-regular">
-                            +
                         </div>
                     </v-card-title>
                     <v-card-actions>
                         <div class="d-flex justify-space-between align-center">
                             <div :class="{ 'text-black': book.priceOld == null || book.priceOld < book.priceNew, 'background-orange': book.priceOld !== null && book.priceOld > book.priceNew }"
                                 class="font-weight-400 size-0.875rem" id="price-button">
-                                {{ book.priceNew ? book.priceNew + ' р.' : 'Цена не указана' }}
+                                {{ book.priceNew ? book.priceNew + ' р.' : '' }}
                             </div>
                             <div class="text--disabled" v-if="book.priceOld > book.priceNew">
                                 <del>{{ book.priceOld }} р.</del>
@@ -94,13 +93,13 @@ export default {
             currentPage: 1,
             booksQuantity: 60,
             sortItems: [
-                { text: 'Title', value: 'title' },
-                { text: 'Author', value: 'author' },
-                { text: 'Price', value: 'price_new' },
-                { text: 'Discount', value: 'discount' },
-                { text: 'Rating', value: 'rating' },
-                { text: 'Created', value: 'created_at' },
-                { text: 'Updated', value: 'updated_at' },
+                { text: 'Название', value: 'title' },
+                { text: 'Автор', value: 'author' },
+                { text: 'Цена', value: 'price_new' },
+                { text: 'Скидка', value: 'discount' },
+                { text: 'Рейтинг', value: 'rating' },
+                { text: 'Дата добавления', value: 'created_at' },
+                { text: 'Дата обновления', value: 'updated_at' },
 
             ],
             sortBy: 'title',

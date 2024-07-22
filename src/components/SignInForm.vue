@@ -4,7 +4,7 @@
             <v-row>
                 <v-col cols="12" sm="12">
                     <v-text-field v-model="login" @input="handleInputSubmit" :rules="[rules.required]"
-                        :error-messages="loginErrorMessages" label="Login" placeholder="Enter your login" dense
+                        :error-messages="loginErrorMessages" label="Логин" placeholder="Введите ваш логин" dense
                         class="error-messages-limited">
                     </v-text-field>
                 </v-col>
@@ -14,8 +14,8 @@
                     <v-text-field v-model="password" @input="handleInputSubmit"
                         :rules="[rules.required, rules.password, rules.matchPassword]"
                         :error-messages="passwordErrorMessages" :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                        :type="showPassword ? 'text' : 'password'" name="input-10-1" label="Password"
-                        placeholder="Enter your password" @click:append="toggleShowPassword" dense
+                        :type="showPassword ? 'text' : 'password'" name="input-10-1" label="Пароль"
+                        placeholder="Введите ваш пароль" @click:append="toggleShowPassword" dense
                         class="error-messages-limited">
                     </v-text-field>
                 </v-col>
@@ -25,8 +25,8 @@
                     <v-text-field v-model="secondPassword" @input="handleInputSubmit"
                         :rules="[rules.required, rules.matchPassword]" :error-messages="secondPasswordErrorMessages"
                         :append-icon="showSecondPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                        :type="showSecondPassword ? 'text' : 'password'" name="input-10-1" label="Repeat password"
-                        placeholder="Repeat your password" @click:append="toggleShowSecondPassword" dense
+                        :type="showSecondPassword ? 'text' : 'password'" name="input-10-1" label="Повторите пароль"
+                        placeholder="Введите ваш пароль" @click:append="toggleShowSecondPassword" dense
                         class="error-messages-limited">
                     </v-text-field>
                 </v-col>
@@ -34,7 +34,7 @@
             <v-row>
                 <v-col cols="12" sm="12">
                     <v-text-field v-model="fullName" @input="handleInputSubmit" :rules="[rules.required]"
-                        :error-messages="fullNameErrorMessages" label="Full Name" placeholder="Enter your full name"
+                        :error-messages="fullNameErrorMessages" label="ФИО" placeholder="Введите ваше ФИО"
                         dense class="error-messages-limited">
                     </v-text-field>
                 </v-col>
@@ -42,8 +42,8 @@
             <v-row>
                 <v-col>
                     <v-text-field v-model="email" @input="handleInputSubmit" @keydown.enter="handleSubmit"
-                        :rules="[rules.required, rules.email]" autocomplete="email" label="E-mail"
-                        placeholder="Enter your email address" :error-messages="emailErrorMessages" dense
+                        :rules="[rules.required, rules.email]" autocomplete="email" label="Эл. почта"
+                        placeholder="Введите вашу эл. почту" :error-messages="emailErrorMessages" dense
                         class="error-messages-limited">
                     </v-text-field>
                 </v-col>
@@ -52,7 +52,7 @@
                 <v-col cols="12" sm="12">
                     <v-btn @click="handleSubmit" :loading="loading" class="custom-button" small rounded  color="accent">
                         <template v-if="!loading">
-                            SIGN IN
+                           Регистрация
                         </template>
                         <template v-else>
                             <v-progress-circular indeterminate size="24"></v-progress-circular>
@@ -86,17 +86,17 @@ export default {
             fullNameErrorMessages: [],
             emailErrorMessages: [],
             rules: {
-                required: value => !!value || 'Required.',
+                required: value => !!value || 'Обязательное поле.',
                 email: value => {
                     const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-                    return pattern.test(value) || 'Invalid e-mail.'
+                    return pattern.test(value) || 'Неверный адрес эл.почты.'
                 },
                 password: value => {
                     const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
-                    return pattern.test(value) || 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter and one number'
+                    return pattern.test(value) || 'Пароль должен состоять не менее чем из 8 символов и содержать как минимум одну заглавную букву, одну строчную букву и одну цифру.'
                 },
                 matchPassword: (value) => {
-                    return value === this.password || 'Passwords do not match.'
+                    return value === this.password || 'Пароли не совпадают'
                 }
             }
         }
@@ -130,9 +130,9 @@ export default {
                 catch (error) {
                     if (error.response) {
                         if (error.response.data.detail === 'User with this username already exists') {
-                            this.loginErrorMessages.push('This user already exists')
+                            this.loginErrorMessages.push('Такой пользователь уже существует')
                         } else if (error.response.data.detail === 'This email address is already in use maybe you need to auth') {
-                            this.emailErrorMessages.push('This email already exists')
+                            this.emailErrorMessages.push('Эта эл.почта уже существует')
                         } else {
                             console.error(error.response.data);
                         }
@@ -143,11 +143,11 @@ export default {
                 }
 
             } else {
-                if (!this.login) this.loginErrorMessages.push('Login is required');
-                if (!this.password) this.passwordErrorMessages.push('Password is required');
-                if (!this.secondPassword) this.secondPasswordErrorMessages.push('Second password is required');
-                if (!this.fullName) this.fullNameErrorMessages.push('Full name is required');
-                if (!this.email) this.emailErrorMessages.push('Email is required');
+                if (!this.login) this.loginErrorMessages.push('Логин не может быть пустым');
+                if (!this.password) this.passwordErrorMessages.push('Пароль не может быть пустым');
+                if (!this.secondPassword) this.secondPasswordErrorMessages.push('Необходимо подтвердить пароль');
+                if (!this.fullName) this.fullNameErrorMessages.push('ФИО не может быть пустым');
+                if (!this.email) this.emailErrorMessages.push('Эл. почта не может быть пустой');
                 // Сброс состояния загрузки в случае невалидной формы
                 this.loading = false;
             }

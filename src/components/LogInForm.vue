@@ -4,7 +4,7 @@
             <v-row>
                 <v-col cols="12" sm="12">
                     <v-text-field v-model="login" @input="handleInputSubmit" :rules="[rules.required]"
-                        :error-messages="loginErrorMessages" label="Login" placeholder="Enter your login" dense />
+                        :error-messages="loginErrorMessages" label="Логин" placeholder="Введите ваш логин" dense />
                 </v-col>
             </v-row>
             <v-row>
@@ -12,7 +12,7 @@
                     <v-text-field v-model="password" @input="handleInputSubmit" @keydown.enter="handleSubmit"
                         :rules="[rules.required]" :error-messages="passwordErrorMessages"
                         :append-icon="show ? 'mdi-eye' : 'mdi-eye-off'" :type="show ? 'text' : 'password'"
-                        name="input-10-1" label="Password" placeholder="Enter your password"
+                        name="input-10-1" label="Пароль" placeholder="Введите ваш пароль"
                         @click:append="show = !show" dense />
                 </v-col>
             </v-row>
@@ -20,7 +20,7 @@
                 <v-col cols="12" sm="12">
                     <v-btn @click="handleSubmit" :loading="loading" class="custom-button" small rounded color="accent">
                         <template v-if="!loading">
-                            LOG IN
+                            Войти
                         </template>
                         <template v-else>
                             <v-progress-circular indeterminate size="24"></v-progress-circular>
@@ -31,7 +31,7 @@
             <v-row>
                 <v-col cols="12" sm="12">
                     <v-btn class="google-button" :href="googleAuthUrl" rounded>
-                        Continue with Google
+                        Продолжить с Google
                         <img src="@/assets/google-logo.png" width="20px" alt="Google Icon" class="google-icon" />
                     </v-btn>
                 </v-col>
@@ -64,7 +64,7 @@ export default {
             loginErrorMessages: [],
             passwordErrorMessages: [],
             rules: {
-                required: value => !!value || 'Required.',
+                required: value => !!value || 'Обязательное поле.',
             }
         }
     },
@@ -122,8 +122,8 @@ export default {
                 }
 
             } else {
-                if (!this.login) this.loginErrorMessages.push('Login is required');
-                if (!this.password) this.passwordErrorMessages.push('Password is required');
+                if (!this.login) this.loginErrorMessages.push('Логин не может быть пустым');
+                if (!this.password) this.passwordErrorMessages.push('Пароль не может быть пустым');
                 // Сброс состояния загрузки в случае невалидной формы
                 this.loading = false;
             }
