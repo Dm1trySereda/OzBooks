@@ -65,7 +65,8 @@
                 </g>
             </svg>
         </div>
-        <router-link id="home" to='/'>Home page</router-link>
+        <router-link id="home" :to="{ name: 'home' }">Home page</router-link>
+
     </div>
 </template>
 <style>

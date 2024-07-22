@@ -1,0 +1,29 @@
+book_routers
+
+1) /books/search (book_id, book_num, title, author) - search
+2) /books/ (page, book_quantity, sort_by, order_asc) - pagination 
+3) /books/create (new_book) - create new
+4) /books/edit (book) - edit book
+5) /books/remove (book_id, book_num) - remove book
+
+
+history_routers
+
+
+1) /history/ (page,books_quantity,sort_by,order_asc) - pagination history
+2) /history/search (book_id, book_num, title, author) - search history
+
+
+google_routers
+
+
+1) /start-google-login - redirect to google - Done
+2) /process-google-login (code) - auth with google - Done
+
+
+user_routers
+
+1) /users/signin (form_data) - login - Done
+2) /users/signup (new_user) - registration - Done
+3) /users/verify-email (code) - verify email  - Done
+4) /users/my-profile - profile - Done

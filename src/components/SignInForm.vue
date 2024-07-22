@@ -1,158 +1,172 @@
 <template>
-    <form class="login-form" @submit.prevent="handleSubmit">
-        <h2>SIGN IN</h2>
-        <div :class="{ 'error': loginError }">
-            <label for="login">Login</label>
-            <input type="text" id="login" v-model="login" required />
-            <span v-if="loginError" class="error-message">{{ loginErrorMessage }}</span>
-        </div>
-        <div>
-            <label for="password">Password</label>
-            <input type="password" id="password" v-model="password" required />
-        </div>
-        <div>
-            <label for="fullName">Full Name</label>
-            <input type="text" id="fullName" v-model="fullName" />
-        </div>
-        <div :class="{ 'error': emailError }">
-            <label for="email">Email</label>
-            <input type="email" id="email" v-model="email" required />
-            <span v-if="emailError" class="error-message">{{ emailErrorMessage }}</span>
-        </div>
-        <button type="submit">SIGN IN</button>
-        <p>Already have an account? <router-link id="signin"  to='/users/signin'>Sign In</router-link></p>
-    </form>
+    <v-form ref="form" v-model="valid" lazy-validation>
+        <v-container>
+            <v-row>
+                <v-col cols="12" sm="12">
+                    <v-text-field v-model="login" @input="handleInputSubmit" :rules="[rules.required]"
+                        :error-messages="loginErrorMessages" label="Login" placeholder="Enter your login" dense
+                        class="error-messages-limited">
+                    </v-text-field>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col cols="12" sm="12">
+                    <v-text-field v-model="password" @input="handleInputSubmit"
+                        :rules="[rules.required, rules.password, rules.matchPassword]"
+                        :error-messages="passwordErrorMessages" :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                        :type="showPassword ? 'text' : 'password'" name="input-10-1" label="Password"
+                        placeholder="Enter your password" @click:append="toggleShowPassword" dense
+                        class="error-messages-limited">
+                    </v-text-field>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col cols="12" sm="12">
+                    <v-text-field v-model="secondPassword" @input="handleInputSubmit"
+                        :rules="[rules.required, rules.matchPassword]" :error-messages="secondPasswordErrorMessages"
+                        :append-icon="showSecondPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                        :type="showSecondPassword ? 'text' : 'password'" name="input-10-1" label="Repeat password"
+                        placeholder="Repeat your password" @click:append="toggleShowSecondPassword" dense
+                        class="error-messages-limited">
+                    </v-text-field>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col cols="12" sm="12">
+                    <v-text-field v-model="fullName" @input="handleInputSubmit" :rules="[rules.required]"
+                        :error-messages="fullNameErrorMessages" label="Full Name" placeholder="Enter your full name"
+                        dense class="error-messages-limited">
+                    </v-text-field>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col>
+                    <v-text-field v-model="email" @input="handleInputSubmit" @keydown.enter="handleSubmit"
+                        :rules="[rules.required, rules.email]" autocomplete="email" label="E-mail"
+                        placeholder="Enter your email address" :error-messages="emailErrorMessages" dense
+                        class="error-messages-limited">
+                    </v-text-field>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col cols="12" sm="12">
+                    <v-btn @click="handleSubmit" :loading="loading" class="custom-button" small rounded  color="accent">
+                        <template v-if="!loading">
+                            SIGN IN
+                        </template>
+                        <template v-else>
+                            <v-progress-circular indeterminate size="24"></v-progress-circular>
+                        </template>
+                    </v-btn>
+                </v-col>
+            </v-row>
+        </v-container>
+    </v-form>
 </template>
 
 <script>
-import { signInUser } from '@/services/api.service.js';
+import userService from '@/services/users.service.js';
+
 export default {
     name: 'SignInForm',
     data() {
         return {
+            showPassword: false,
+            showSecondPassword: false,
+            loading: false,
             login: '',
             password: '',
+            secondPassword: '',
             fullName: '',
             email: '',
-            loginError: false,
-            loginErrorMessage: '',
-            emailError: false,
-            emailErrorMessage: ''
-        };
+            valid: false,
+            loginErrorMessages: [],
+            passwordErrorMessages: [],
+            secondPasswordErrorMessages: [],
+            fullNameErrorMessages: [],
+            emailErrorMessages: [],
+            rules: {
+                required: value => !!value || 'Required.',
+                email: value => {
+                    const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                    return pattern.test(value) || 'Invalid e-mail.'
+                },
+                password: value => {
+                    const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+                    return pattern.test(value) || 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter and one number'
+                },
+                matchPassword: (value) => {
+                    return value === this.password || 'Passwords do not match.'
+                }
+            }
+        }
     },
     methods: {
-        handleSubmit() {
-            const userData = {
-                username: this.login,
-                password: this.password,
-                fullName: this.fullName,
-                email: this.email
-            };
-            signInUser(userData)
-                .then(response => {
-                    console.log('User', response.data);
-                    this.loginError = false;
-                    this.loginErrorMessage = '';
-                    this.emailError = false;
-                    this.emailErrorMessage = '';
-                    // Очистка полей после успешной отправки
-                    this.login = '';
-                    this.password = '';
-                    this.fullName = '';
-                    this.email = '';
-                })
-                .catch(error => {
+        async handleSubmit() {
+            this.loading = true;
+            if (this.$refs.form.validate()) {
+                const userData = {
+                    username: this.login,
+                    password: this.password,
+                    fullName: this.fullName,
+                    email: this.email
+                };
+                try {
+                    const response = await userService.signInUser(userData);
+                    if (response.status == 201) {
+                         // Эмитируем событие после успешного ответа от сервера
+                        this.$emit('success', userData);
+                        // Очищаем поля формы
+                        this.login = '';
+                        this.password = '';
+                        this.secondPassword = '';
+                        this.fullName = '';
+                        this.email = '';
+                        this.showPassword = false;
+                        this.showSecondPassword = false;
+                    }
+
+                }
+                catch (error) {
                     if (error.response) {
                         if (error.response.data.detail === 'User with this username already exists') {
-                            this.loginError = true;
-                            this.loginErrorMessage = 'This user already exists';
-                            // Очистка поля ошибок
-                            this.emailError = false;
-                            this.emailErrorMessage = '';
-
-
+                            this.loginErrorMessages.push('This user already exists')
                         } else if (error.response.data.detail === 'This email address is already in use maybe you need to auth') {
-                            this.emailError = true;
-                            this.emailErrorMessage = 'This email already exists';
-                            // Очистка поля ошибок
-                            this.loginError = false;
-                            this.loginErrorMessage = '';
-
+                            this.emailErrorMessages.push('This email already exists')
                         } else {
                             console.error(error.response.data);
                         }
-                    } else {
-                        console.error(error.message);
                     }
-                });
+                }
+                finally {
+                    this.loading = false;
+                }
+
+            } else {
+                if (!this.login) this.loginErrorMessages.push('Login is required');
+                if (!this.password) this.passwordErrorMessages.push('Password is required');
+                if (!this.secondPassword) this.secondPasswordErrorMessages.push('Second password is required');
+                if (!this.fullName) this.fullNameErrorMessages.push('Full name is required');
+                if (!this.email) this.emailErrorMessages.push('Email is required');
+                // Сброс состояния загрузки в случае невалидной формы
+                this.loading = false;
+            }
+        },
+        handleInputSubmit() {
+            this.loginErrorMessages = [];
+            this.passwordErrorMessages = [];
+            this.secondPasswordErrorMessages = [];
+            this.fullNameErrorMessages = [];
+            this.emailErrorMessages = [];
+        },
+        toggleShowPassword() {
+            this.showPassword = !this.showPassword;
+        },
+        toggleShowSecondPassword() {
+            this.showSecondPassword = !this.showSecondPassword;
         }
     }
 }
 </script>
 
-<style scoped>
-.login-form {
-    text-align: left;
-    margin: 20px auto;
-    width: 300px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
-}
-
-.login-form p {
-    font-size: 12px;
-}
-
-.login-form #signin {
-    text-decoration-line: none;
-}
-.login-form h2 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.login-form div {
-    margin: 10px 0;
-    position: relative;
-}
-
-.login-form label {
-    display: block;
-}
-
-.login-form input {
-    width: 93%;
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.login-form .error input {
-    border: 1px solid red;
-}
-
-.login-form .error-message {
-    color: red;
-    font-size: 0.8em;
-    position: absolute;
-    top: 68%;
-    left: 105%;
-    transform: translateY(-50%);
-    white-space: nowrap;
-}
-
-.login-form button {
-    border-radius: 5px;
-    padding: 10px 15px;
-    background-color: #217ba5;
-    color: white;
-    border: none;
-    cursor: pointer;
-    width: 50%;
-    margin-top: 10px;
-}
-</style>
+<style></style>

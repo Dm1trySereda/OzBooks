@@ -1,5 +1,5 @@
 <template>
-    <v-card class="login-page">
+    <v-card class="login-page elevation-10">
         <v-tabs v-model="tab" grow>
             <v-tab key="0">{{ login }}</v-tab>
             <v-tab key="1">{{ signIn }}</v-tab>
@@ -7,15 +7,15 @@
         <v-tabs-items v-model="tab">
             <v-tab-item key="0">
                 <div class="form-container">
-                    <LogInForm @success="handleLoginSuccess" v-if="!showOtp"/>
-                    <div v-if="showOtp">
-                        <OtpInputComponent @otp-success="handleOtpSuccess" @otp-failure="handleOtpFailure" />
-                    </div>
+                    <LogInForm @success="handleLoginSuccess" :initialData="loginFormData" v-if="!showOtp" />
+                    <OtpInputComponent @otp-success="handleOtpSuccess" v-else />
+
+
                 </div>
             </v-tab-item>
             <v-tab-item key="1">
                 <div class="form-container">
-                    <SignInForm />
+                    <SignInForm @success="handleSignInSuccess" />
                 </div>
             </v-tab-item>
         </v-tabs-items>
@@ -32,10 +32,11 @@ export default {
     name: 'MyComponent',
     data() {
         return {
-            tab: null,
+            tab: 0,
             login: "LOG IN",
             signIn: "SIGN IN",
             showOtp: false,
+            loginFormData: {}
         };
     },
     components: {
@@ -45,20 +46,21 @@ export default {
     },
     methods: {
         handleLoginSuccess() {
-            console.log("Authentication successful");
             // Показываем OTP компонент после успешной аунтефикации
             this.showOtp = true;
         },
-        handleOtpSuccess() {
-            // Действия после успешной проверки OTP
-            console.log("OTP validation successful");
+        handleSignInSuccess(userData) {
+            // После успешной регитрации переключаем на вкладку логина и передаем данные
+            this.loginFormData = userData;
+            this.tab = 0
 
         },
-        handleOtpFailure() {
-            // Действия при неудачной проверки OTP
-            console.log("OTP validation failed");
+        handleOtpSuccess() {
+            // После успешного ввода кода отправляем пользователя на страницу, к которой он пытался получить доступ, или же на главную страницу
+            const redirectUrl = this.$route.query.redirect || { name: 'home' };
+            this.$router.replace(redirectUrl);
 
-        }
+        },
     },
 
 
@@ -66,9 +68,21 @@ export default {
 </script>
 
 <style>
+.v-messages__message {
+    color: rgb(240, 104, 104) !important;
+}
+
+.error-messages-limited .v-messages__message {
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 230px;
+}
+
 .login-page {
     width: 400px;
     margin: 0 auto;
+    margin-top: 100px;
+   
 }
 
 .form-container {
