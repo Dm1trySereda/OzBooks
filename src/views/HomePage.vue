@@ -1,85 +1,132 @@
 <template>
-    <v-container class="conatiner-books">
+    <v-container class="container-books">
         <v-row>
-            <v-navigation-drawer permanent style="width: 300px; margin-right: 50px;">
-                <v-list-item>
-                    <v-list-item-content>
-                        <v-list-item-title class="text-h6">
-                          Сортировать по
-                        </v-list-item-title>
-                    </v-list-item-content>
-                </v-list-item>
+            <v-col v-if="showFilters" cols="12" sm="4" md="3" lg="3">
+                <v-navigation-drawer permanent class="drawer">
 
-                <v-divider></v-divider>
+                    <v-list>
+                        <v-list-item>
+                            <v-list-item-content>
+                                <v-list-item-title class="navigation-title">Сортировать</v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                        <v-divider></v-divider>
+                        <v-list-item-group>
+                            <v-list-item v-for="item in sortItems" :key="item.text" @click="handleSort(item.value)"
+                                link>
+                                <v-list-item-content>
+                                    <v-list-item-subtitle class="navigation-subtitle">{{ item.text
+                                        }}</v-list-item-subtitle>
+                                </v-list-item-content>
+                                <v-list-item-icon @click="handleSort(item.value)">
+                                    <v-icon v-if="sortBy === item.value" small>{{ orderAsc ? 'mdi-arrow-up' :
+                                        'mdi-arrow-down' }}</v-icon>
+                                </v-list-item-icon>
+                            </v-list-item>
+                        </v-list-item-group>
+                    </v-list>
 
-                <v-list>
-                    <v-list-item v-for="item in sortItems" :key="item.text" link @click="handleSort(item.value)">
-                        <v-list-item-content class="d-flex align-center justify-center">
-                            <v-col>
-                                <v-list-item-title>{{ item.text }}</v-list-item-title>
-                            </v-col>
-                            <v-col>
-                                <v-icon v-if="sortBy === item.value">
-                                    {{ orderAsc ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
-                                </v-icon>
-                            </v-col>
-                        </v-list-item-content>
-                    </v-list-item>
-                </v-list>
-            </v-navigation-drawer>
-            <!-- <v-text-field class="mx-3" label="Search book by title" flat hide-details prepend-icon="mdi-magnify" solo
-                v-model="search" @input="searchBooks">
-            </v-text-field> -->
-            <v-col v-for="book in searchhandler" :key="book.id" cols="12" sm="6" md="4" lg="3"
-                style="padding-right: 20px;">
-                <v-card class="mx-auto my-5" max-width="374" tile>
-                    <div class="image-container">
-                        <v-img class="card-image" :src="book.image" style="object-fit: cover"></v-img>
-                        <div id="discount-button" v-if="book.priceOld > book.priceNew"
-                            class="text-left font-weight-regular text-xs">
-                            -{{ book.discount }}
-                        </div>
-                    </div>
-                    <v-card-title style="padding-bottom: 0; padding-top: 0;">
-                        <div id="discount-button-none" v-if="book.priceOld < book.priceNew"
-                            class="text-h6 text-sm-left font-weight-regular">
-                        </div>
-                    </v-card-title>
-                    <v-card-actions>
-                        <div class="d-flex justify-space-between align-center">
-                            <div :class="{ 'text-black': book.priceOld == null || book.priceOld < book.priceNew, 'background-orange': book.priceOld !== null && book.priceOld > book.priceNew }"
-                                class="font-weight-400 size-0.875rem" id="price-button">
-                                {{ book.priceNew ? book.priceNew + ' р.' : '' }}
+                    <v-list>
+                        <v-list-item>
+                            <v-list-item-content>
+                                <v-list-item-title class="navigation-title">Автор</v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                        <v-divider></v-divider>
+                        <v-list-item-subtitle v-for="book in tenPopularAuthors" :key="book.author">
+                            <v-checkbox v-model="selectedAuthors" :value="book.author" class="checkbox-subtitle"
+                                hide-details>
+                                <template v-slot:label>
+                                    <span class="sort-text">{{ book.author }}</span>
+                                    <span class="book-count">{{ book.count }}</span>
+                                </template>
+                            </v-checkbox>
+                        </v-list-item-subtitle>
+                    </v-list>
+
+                    <v-list>
+                        <v-list-item>
+                            <v-list-item-content>
+                                <v-list-item-title class="navigation-title">Год издания</v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                        <v-divider></v-divider>
+                        <v-list-item-subtitle v-for="book in publishingYear" :key="book.year">
+                            <v-checkbox v-model="publishingYear" :value="book.year" class="checkbox-subtitle"
+                                hide-details>
+                                <template v-slot:label>
+                                    <span class="sort-text">{{ book.year }}</span>
+                                    <span class="book-count">{{ book.count }}</span>
+                                </template>
+                            </v-checkbox>
+                        </v-list-item-subtitle>
+                    </v-list>
+                </v-navigation-drawer>
+            </v-col>
+
+
+            <v-col cols="12" sm="8" md="9" lg="9">
+                <v-row>
+                    <v-col v-for="book in searchhandler" :key="book.id" cols="12" sm="6" md="4" lg="4">
+                        <v-card>
+                            <div id="discount-button" v-if="book.priceOld > book.priceNew"
+                                class="text-left font-weight-regular text-xs">
+                                -{{ book.discount }}
                             </div>
-                            <div class="text--disabled" v-if="book.priceOld > book.priceNew">
-                                <del>{{ book.priceOld }} р.</del>
+                            <div class="image-container">
+                                <v-img class="card-image" :src="book.image" style="object-fit: contain"></v-img>
                             </div>
-                        </div>
-                    </v-card-actions>
+                            <div class="text-container">
+                                <v-card-title style="padding-bottom: 0; padding-top: 0;">
+                                    <div id="discount-button-none" v-if="book.priceOld < book.priceNew"
+                                        class="text-h6 text-sm-left font-weight-regular"></div>
+                                </v-card-title>
+                                <v-card-actions>
+                                    <div class="d-flex justify-space-between align-center">
+                                        <div :class="{ 'text-black': book.priceOld == null || book.priceOld < book.priceNew, 'background-orange': book.priceOld !== null && book.priceOld > book.priceNew }"
+                                            class="font-weight-400 size-0.875rem" id="price-button">
+                                            {{ book.priceNew ? book.priceNew + ' р.' : '' }}
+                                        </div>
+                                        <div class="text--disabled" v-if="book.priceOld > book.priceNew">
+                                            <del>{{ book.priceOld }} р.</del>
+                                        </div>
+                                    </div>
+                                </v-card-actions>
+                                <v-card-actions class="d-block">
+                                    <p class="text-sm-left text-truncate">{{ book.title }}</p>
+                                    <p class="text-sm-center font-weight-400 size-0.875rem text-truncate text--disabled"
+                                        style="margin-bottom: 0;">
+                                        {{ book.author }}
+                                    </p>
+                                </v-card-actions>
+                                <v-divider class="mx-4"></v-divider>
+                                <v-card-subtitle class="text-center">
+                                    <v-rating :value="book.rating" color="amber" dense half-increments readonly
+                                        size="22" v-if="book.rating !== null"></v-rating>
+                                    <div class="grey--text ms-4">{{ book.rating }}</div>
+                                </v-card-subtitle>
+                            </div>
+                        </v-card>
 
-                    <v-card-actions class="d-block">
-                        <p class="text-sm-left text-truncate">
-                            {{ book.title }}
-                        </p>
-                        <p class=" text-sm-center font-weight-400 size-0.875rem text-truncate text--disabled"
-                            style="margin-bottom: 0;">
-                            {{ book.author }}
-                        </p>
-                    </v-card-actions>
-                    <v-divider class="mx-4"></v-divider>
-                    <v-card-subtitle class="text-center">
-                        <v-rating :value="book.rating" color="amber" dense half-increments readonly size="22"
-                            v-if="book.rating !== null"></v-rating>
-                        <div class="grey--text ms-4">
-                            {{ book.rating }}
-                        </div>
-                    </v-card-subtitle>
-                </v-card>
+                    </v-col>
+                </v-row>
+
+
             </v-col>
         </v-row>
-        <div class="text-center">
-            <v-pagination v-model="currentPage" :length=totalPages :total-visible="5" circle
-                @input="fetchBooks"></v-pagination>
+        <div class="pagination">
+            <span v-if="currentPage > 1" class="pagination-item" @click="handlePageChange(currentPage - 1)">
+                &laquo;
+            </span>
+            
+            <span v-for="page in paginatedPages" :key="page"
+                :class="['pagination-item', { 'active': page === currentPage }]" @click="handlePageChange(page)">
+                {{ page }}
+            </span>
+            <span v-if="currentPage < totalPages" class="pagination-item" @click="handlePageChange(currentPage + 1)">
+                &raquo;
+            </span>
+
         </div>
     </v-container>
 </template>
@@ -93,27 +140,37 @@ export default {
             currentPage: 1,
             booksQuantity: 60,
             sortItems: [
-                { text: 'Название', value: 'title' },
-                { text: 'Автор', value: 'author' },
-                { text: 'Цена', value: 'price_new' },
-                { text: 'Скидка', value: 'discount' },
-                { text: 'Рейтинг', value: 'rating' },
-                { text: 'Дата добавления', value: 'created_at' },
-                { text: 'Дата обновления', value: 'updated_at' },
+                { text: 'По названию', value: 'title' },
+                { text: 'По автору', value: 'author' },
+                { text: 'По дате поступления', value: 'created_at' },
+                { text: 'По цене', value: 'price_new' },
+                { text: 'По рейтингу', value: 'rating' },
+                { text: 'Скидке', value: 'discount' },
+                { text: 'Дате обновления', value: 'updated_at' },
 
             ],
             sortBy: 'title',
             orderAsc: true,
             loading: false,
             books: [],
-            right: null,
-            search: ''
+            search: '',
+            selectedSort: '',
+            selectedAuthors: [],
+            tenPopularAuthors: [],
+            publishingYear: [],
+            showFilters: true,
+
 
 
 
 
         }
-    },  
+    },
+    created() {
+        this.fetchBooks();
+        this.loadPopularAuthors();
+        this.loadPublishingYear();
+    },
     computed: {
         totalPages() {
             return this.books.length == this.booksQuantity ? Math.ceil(38483 / this.booksQuantity) : Math.ceil(this.books.length / this.booksQuantity);
@@ -123,6 +180,24 @@ export default {
         },
         searchhandler() {
             return this.books.filter(book => book.title.toLowerCase().includes(this.search.toLowerCase()));
+        },
+        paginatedPages() {
+            const pages = [];
+            const total = this.totalPages;
+            const current = this.currentPage;
+
+            for (let i = Math.max(current - 3, 1); i <= Math.min(current + 3, total); i++) {
+                pages.push(i);
+            }
+
+            if (!pages.includes(total) && total > 1) {
+                pages.push(total);
+            }
+            if (!pages.includes(1) && total > 1) {
+                pages.unshift(1);
+            }
+
+            return pages;
         }
     },
     methods: {
@@ -147,7 +222,6 @@ export default {
 
                 this.books = response.data
                 this.windowScroll()
-                console.log(this.books.length);
             } catch (error) {
                 console.error(error.message);
             } finally {
@@ -155,15 +229,38 @@ export default {
             }
 
         },
+        async loadPopularAuthors() {
+            try {
+                const count = {
+                    count: 5
+                }
+                const response = await booksService.getMostPopularauthors(count);
+                this.tenPopularAuthors = response.data
+            } catch (error) {
+                console.error('Failed to load popular authors:', error);
+            }
+        },
+        async loadPublishingYear() {
+            try {
+                const count = {
+                    count: 5
+                }
+                const response = await booksService.getPublishingYears(count);
+                this.publishingYear = response.data
+                console.log(this.publishingYear);
+            } catch (error) {
+                console.error('Failed to load popular publishing year:', error);
+            }
+        },
         async searchBooks() {
             const bookData = {
                 title: this.search,
             };
             const response = await booksService.searchBooks(bookData);
             this.books = response.data
-            console.log(this.books);
         },
         handleSort(sortBy) {
+            console.log(this.selectedSort);
             if (this.sortBy === sortBy) {
                 this.orderAsc = !this.orderAsc;
             } else {
@@ -179,37 +276,85 @@ export default {
                 behavior: 'smooth'
             });
 
+        },
+        handlePageChange(page) {
+            if (page !== this.currentPage) {
+                this.currentPage = page;
+                this.fetchBooks();
+            }
         }
+    },
 
-    },
-    created() {
-        this.fetchBooks();
-    },
+
 }
 </script>
 <style scoped>
-.conatiner-books {
+.v-navigation-drawer {
+    width: 310px !important;
+}
+
+.v-navigation-drawer .v-list {
+    padding-top: 0;
+}
+
+.navigation-title {
+    font-size: 1.2rem;
+    text-align: start;
+}
+
+.navigation-subtitle {
+    color: black !important;
+    margin-right: 5px;
+    font-size: 0.9rem;
+    text-align: start;
+}
+
+.checkbox-subtitle {
+    margin-left: 10px;
+}
+
+.sort-text {
+    font-size: 0.9rem;
+    text-align: start;
+    color: black;
+    margin-right: 5px;
+}
+
+.book-count {
+    color: gray;
+    font-size: 0.8rem;
+    margin-top: 2px;
+}
+
+.container-books {
     max-width: 1400px;
     margin-left: auto;
     margin-right: auto;
 }
 
+
+
+
 .v-card {
     text-align: center;
     padding: 16px;
-    height: 400px;
+    height: 420px;
+
 }
 
-.v-card .v-image {
-    text-align: center;
-    margin-left: 80px;
+.image-container {
+    width: 50%;
+    height: 220px;
+    position: relative;
+    margin-left: 70px;
 }
 
 .card-image {
-    width: 45%;
-    height: 200px;
-    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
+
 
 #discount-button {
     position: absolute;
@@ -239,5 +384,46 @@ export default {
 
 .background-orange {
     color: #f07800;
+}
+
+
+
+.pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.pagination-item {
+    display: inline-block;
+    margin: 0 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+    color: #000;
+
+}
+
+.pagination-item:hover {
+    background-color: #f0f0f0;
+
+}
+
+.pagination-item.active {
+    color: #000;
+
+    background-color: #dcdcdc;
+
+}
+
+.pagination-item:not(.active) {
+    color: #333;
+
+}
+
+.points {
+    color: #ccc;
+    cursor: default; 
+    pointer-events: none; 
 }
 </style>

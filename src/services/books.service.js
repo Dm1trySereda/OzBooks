@@ -16,5 +16,19 @@ class BooksService {
     const response = await this.apiService.get(`/books/search/?${params}`);
     return response;
   }
+  async getMostPopularauthors(count) {
+    const params = new URLSearchParams(count).toString();
+    const response = await this.apiService.get(
+      `/books/search/popular-authors?${params}`
+    );
+    return response;
+  }
+  async getPublishingYears(count) {
+    const params = new URLSearchParams(count).toString();
+    const response = await this.apiService.get(
+      `/books/search/publishing-years?${params}`
+    );
+    return response;
+  }
 }
 export default new BooksService();
