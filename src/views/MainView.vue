@@ -19,7 +19,7 @@
                         <v-icon class="login-icon">mdi-account-outline</v-icon>
                         <span class="login-text">Войти</span>
                     </v-col>
-                    <v-col cols="auto" class="d-flex flex-column align-center login-container" @click="handleLogin"
+                    <v-col cols="auto" class="d-flex flex-column align-center login-container" @click="handleProfile"
                         v-if="authorized">
                         <v-icon class="login-icon">mdi-account-outline</v-icon>
                         <span class="login-text">Профиль</span>
@@ -113,7 +113,7 @@ export default {
             'mdi-instagram',
         ],
         dialog: false,
-        authorized: localStorageService.getToken() ? true : false,
+        authorized: localStorageService.getToken() || localStorageService.getGoogleAccessToken() ? true : false,
         search: ''
     }),
     methods: {
@@ -121,24 +121,28 @@ export default {
             setBooks: 'setBooks',
         }),
         handleHome() {
-            if (this.$route.name !== 'home-page') {
+            if (this.$route.name !== 'home') {
                 this.$router.push({ name: 'home' });
             }
         },
         handleLogin() {
-            if (!localStorageService.getToken()) {
+            if (!localStorageService.getToken() || !localStorageService.getGoogleAccess()) {
                 this.$router.push({ name: 'login' });
             }
 
         },
         handleLogout() {
 
-            if (localStorageService.getToken()) {
+            if (localStorageService.getToken() || localStorageService.getGoogleAccessToken()) {
                 localStorageService.clearToken()
             }
             this.dialog = false
             this.authorized = false
-
+        },
+        handleProfile() {
+            if (!localStorageService.getToken() || !localStorageService.getGoogleAccess()) {
+                this.$router.push({ name: 'my-profile' });
+            }
 
         },
         async searchBooks() {
@@ -149,7 +153,6 @@ export default {
                 const response = await booksService.searchBooks(bookData);
                 if (response.status === 200) {
                     this.books = response.data
-                    console.log(this.books);
                     // Обновляем список книг в Vuex
                     this.setBooks(response.data);
                 }

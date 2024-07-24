@@ -9,9 +9,13 @@ class LocalStorageService {
   getToken() {
     return localStorage.getItem("token");
   }
+  getGoogleAccessToken() {
+    return localStorage.getItem("googleAccessToken");
+  }
 
   clearToken() {
     localStorage.removeItem("token");
+    localStorage.removeItem("googleAccessToken");
   }
   setUser(user) {
     localStorage.setItem("user", JSON.stringify(user));

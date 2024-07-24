@@ -4,6 +4,7 @@
             <v-col v-if="showFilters" cols="12" sm="4" md="3" lg="3">
                 <v-navigation-drawer permanent class="drawer">
 
+
                     <v-list>
                         <v-list-item>
                             <v-list-item-content>
@@ -26,6 +27,7 @@
                         </v-list-item-group>
                     </v-list>
 
+
                     <v-list>
                         <v-list-item>
                             <v-list-item-content>
@@ -33,7 +35,7 @@
                             </v-list-item-content>
                         </v-list-item>
                         <v-divider></v-divider>
-                        <v-list-item-subtitle v-for="book in tenPopularAuthors" :key="book.author">
+                        <v-list-item-subtitle v-for="book in PopularAuthors" :key="book.author">
                             <v-checkbox v-model="selectedAuthors" :value="book.author" class="checkbox-subtitle"
                                 hide-details>
                                 <template v-slot:label>
@@ -42,7 +44,14 @@
                                 </template>
                             </v-checkbox>
                         </v-list-item-subtitle>
+                        <v-text-field class="search-author" placeholder="Введите фамилию" hide-details v-model="search"
+                            @input="searchBooks">
+                            <template v-slot:append>
+                                <v-icon small>mdi-magnify</v-icon>
+                            </template>
+                        </v-text-field>
                     </v-list>
+
 
                     <v-list>
                         <v-list-item>
@@ -51,8 +60,10 @@
                             </v-list-item-content>
                         </v-list-item>
                         <v-divider></v-divider>
-                        <v-list-item-subtitle v-for="book in publishingYear" :key="book.year">
-                            <v-checkbox v-model="publishingYear" :value="book.year" class="checkbox-subtitle"
+
+
+                        <v-list-item-subtitle v-for="book in firstFiveYears" :key="book.year">
+                            <v-checkbox v-model="selectedYears" :value="book.year" class="checkbox-subtitle"
                                 hide-details>
                                 <template v-slot:label>
                                     <span class="sort-text">{{ book.year }}</span>
@@ -60,6 +71,24 @@
                                 </template>
                             </v-checkbox>
                         </v-list-item-subtitle>
+
+
+                        <v-select v-model="selectedRemainingYears" :items="remainingYears" item-value="year"
+                            item-text="year" :placeholder="'Еще ' + remainingYears.length + '...'" multiple
+                            class="year-select">
+                            <template v-slot:item="{ item }">
+                                <v-list-item-content>
+                                    <v-list-item-title>
+                                        <v-checkbox v-model="selectedRemainingYears" :value="item.year" hide-details >
+                                            <template v-slot:label>
+                                                <span class="sort-text">{{ item.year }}</span>
+                                                <span class="book-count">{{ item.count }}</span>
+                                            </template>
+                                        </v-checkbox>
+                                    </v-list-item-title>
+                                </v-list-item-content>
+                            </template>
+                        </v-select>
                     </v-list>
                 </v-navigation-drawer>
             </v-col>
@@ -107,26 +136,26 @@
                                 </v-card-subtitle>
                             </div>
                         </v-card>
-
                     </v-col>
                 </v-row>
-
-
             </v-col>
         </v-row>
+
+
         <div class="pagination">
             <span v-if="currentPage > 1" class="pagination-item" @click="handlePageChange(currentPage - 1)">
                 &laquo;
             </span>
-            
+
             <span v-for="page in paginatedPages" :key="page"
-                :class="['pagination-item', { 'active': page === currentPage }]" @click="handlePageChange(page)">
+                :class="['pagination-item', { 'active': page === currentPageFromRoute }, { 'points': page == '...' }]"
+                @click="handlePageChange(page)">
                 {{ page }}
             </span>
+
             <span v-if="currentPage < totalPages" class="pagination-item" @click="handlePageChange(currentPage + 1)">
                 &raquo;
             </span>
-
         </div>
     </v-container>
 </template>
@@ -147,23 +176,23 @@ export default {
                 { text: 'По рейтингу', value: 'rating' },
                 { text: 'Скидке', value: 'discount' },
                 { text: 'Дате обновления', value: 'updated_at' },
-
             ],
             sortBy: 'title',
             orderAsc: true,
             loading: false,
-            books: [],
             search: '',
             selectedSort: '',
-            selectedAuthors: [],
-            tenPopularAuthors: [],
-            publishingYear: [],
+
             showFilters: true,
 
+            books: [],  // Наполнение списка книг с бека
 
+            PopularAuthors: [],  // Наполнение списка авторов с бека
+            selectedAuthors: [],  // Выбранные авторы
 
-
-
+            publishingYear: [], // Наполнение списка с бека
+            selectedYears: [], // Годы, выбранные в основном списке
+            selectedRemainingYears: [], // Годы, выбранные в раскрывающемся списке
         }
     },
     created() {
@@ -173,7 +202,7 @@ export default {
     },
     computed: {
         totalPages() {
-            return this.books.length == this.booksQuantity ? Math.ceil(38483 / this.booksQuantity) : Math.ceil(this.books.length / this.booksQuantity);
+            return this.books.length === this.booksQuantity ? Math.ceil(38483 / this.booksQuantity) : Math.ceil(this.books.length / this.booksQuantity);
         },
         currentPageFromRoute() {
             return parseInt(this.$route.query.page) || this.$route.params.page + 1 || this.currentPage;
@@ -184,21 +213,27 @@ export default {
         paginatedPages() {
             const pages = [];
             const total = this.totalPages;
-            const current = this.currentPage;
+            const current = this.currentPageFromRoute;
 
             for (let i = Math.max(current - 3, 1); i <= Math.min(current + 3, total); i++) {
                 pages.push(i);
             }
 
             if (!pages.includes(total) && total > 1) {
-                pages.push(total);
+                pages.push("...", total);
             }
             if (!pages.includes(1) && total > 1) {
                 pages.unshift(1);
             }
 
             return pages;
-        }
+        },
+        firstFiveYears() {
+            return this.publishingYear.slice(0, 5);
+        },
+        remainingYears() {
+            return this.publishingYear.slice(5);
+        },
     },
     methods: {
         async fetchBooks() {
@@ -216,51 +251,44 @@ export default {
                 const response = await booksService.getBooks(bookData);
 
                 if (parseInt(this.$route.params.page || 1) !== this.currentPage) {
-
-                    this.$router.push({ name: 'home-page', params: { page: this.currentPage } });
+                    this.$router.push({
+                        name: 'home-page',
+                        query: { page: this.currentPage }
+                    });
                 }
 
-                this.books = response.data
-                this.windowScroll()
+                this.books = response.data;
+                this.windowScroll();
             } catch (error) {
                 console.error(error.message);
             } finally {
                 this.loading = false;
             }
-
         },
         async loadPopularAuthors() {
             try {
-                const count = {
-                    count: 5
-                }
+                const count = { count: 5 };
                 const response = await booksService.getMostPopularauthors(count);
-                this.tenPopularAuthors = response.data
+                this.PopularAuthors = response.data;
             } catch (error) {
                 console.error('Failed to load popular authors:', error);
             }
         },
         async loadPublishingYear() {
             try {
-                const count = {
-                    count: 5
-                }
+                const count = { count: 30 };
                 const response = await booksService.getPublishingYears(count);
-                this.publishingYear = response.data
-                console.log(this.publishingYear);
+                this.publishingYear = response.data;
             } catch (error) {
                 console.error('Failed to load popular publishing year:', error);
             }
         },
         async searchBooks() {
-            const bookData = {
-                title: this.search,
-            };
+            const bookData = { title: this.search };
             const response = await booksService.searchBooks(bookData);
-            this.books = response.data
+            this.books = response.data;
         },
         handleSort(sortBy) {
-            console.log(this.selectedSort);
             if (this.sortBy === sortBy) {
                 this.orderAsc = !this.orderAsc;
             } else {
@@ -269,13 +297,11 @@ export default {
             }
             this.fetchBooks();
         },
-
         windowScroll() {
             window.scrollTo({
                 top: 0,
                 behavior: 'smooth'
             });
-
         },
         handlePageChange(page) {
             if (page !== this.currentPage) {
@@ -284,10 +310,9 @@ export default {
             }
         }
     },
-
-
 }
 </script>
+
 <style scoped>
 .v-navigation-drawer {
     width: 310px !important;
@@ -332,6 +357,21 @@ export default {
     margin-right: auto;
 }
 
+.search-author {
+    margin-top: 10px;
+    border-radius: 8px;
+    width: 90%;
+    padding: 8px;
+    margin-left: 5px;
+}
+
+.year-select {
+    margin-top: 10px;
+    border-radius: 8px;
+    width: 90%;
+    padding: 8px;
+    margin-left: 5px;
+}
 
 
 
@@ -339,7 +379,6 @@ export default {
     text-align: center;
     padding: 16px;
     height: 420px;
-
 }
 
 .image-container {
@@ -354,7 +393,6 @@ export default {
     height: 100%;
     object-fit: contain;
 }
-
 
 #discount-button {
     position: absolute;
@@ -401,29 +439,24 @@ export default {
     border-radius: 4px;
     font-size: 16px;
     color: #000;
-
 }
 
 .pagination-item:hover {
     background-color: #f0f0f0;
-
 }
 
 .pagination-item.active {
     color: #000;
-
     background-color: #dcdcdc;
-
 }
 
 .pagination-item:not(.active) {
     color: #333;
-
 }
 
-.points {
+.pagination-item.points {
     color: #ccc;
-    cursor: default; 
-    pointer-events: none; 
+    cursor: default;
+    pointer-events: none;
 }
 </style>

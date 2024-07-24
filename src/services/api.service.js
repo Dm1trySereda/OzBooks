@@ -16,7 +16,9 @@ class ApiService {
     // Перехватчик для добавления токена к каждому запросу
     this.instance.interceptors.request.use(
       (config) => {
-        const token = localStorageService.getToken();
+        const token =
+          localStorageService.getToken() ||
+          localStorageService.getGoogleAccessToken();
         if (token) {
           config.headers.Authorization = token;
         }
@@ -34,6 +36,7 @@ class ApiService {
       },
       (error) => {
         if (error.response && error.response.status === 403) {
+          console.log("Error: " + error.response.status);
           localStorageService.clearToken();
           checkAuthentication(router.currentRoute, null, (nextRoute) => {
             if (nextRoute) {
