@@ -19,7 +19,7 @@ const routes = [
         component: HomePage,
       },
       {
-        path: "/home/?page=:page",
+        path: "/home/sort=:sort_by?/order_asc=:order_asc?/authors=:authors?/page=:page?",
         name: "home-page",
         component: HomePage,
       },

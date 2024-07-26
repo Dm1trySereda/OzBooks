@@ -1,25 +1,14 @@
-  import Vue from "vue";
-  import Vuex from "vuex";
+import Vue from "vue";
+import Vuex from "vuex";
+import filters from "./filters.js";
+import books from "./books.js";
 
-  Vue.use(Vuex);
+Vue.use(Vuex);
 
-  const store = new Vuex.Store({
-    state: {
-      books: [],
-    },
-    mutations: {
-      setBooks(state, books) {
-        state.books = books;
-      },
-    },
-    actions: {
-      updateBooks({ commit }, books) {
-        commit('setBooks', books); 
-      },
-    },
-    getters: {
-      books: (state) => state.books,
-    },
-  });
-
-  export default store;
+const store = new Vuex.Store({
+  modules: {
+    books,
+    filters,
+  },
+});
+export default store;

@@ -1,5 +1,6 @@
 import apiService from "@/services/api.service.js";
 import localStorageService from "@/services/local-storage.service.js";
+import qs from "qs";
 
 class BooksService {
   constructor() {
@@ -7,12 +8,12 @@ class BooksService {
     this.localStorageService = localStorageService;
   }
   async getBooks(booksData) {
-    const params = new URLSearchParams(booksData).toString();
+    const params = qs.stringify(booksData, { arrayFormat: "repeat" });
     const response = await this.apiService.get(`/books/?${params}`);
     return response;
   }
   async searchBooks(booksData) {
-    const params = new URLSearchParams(booksData).toString();
+    const params = qs.stringify(booksData, { arrayFormat: "repeat" });
     const response = await this.apiService.get(`/books/search/?${params}`);
     return response;
   }

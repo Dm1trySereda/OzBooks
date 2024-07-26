@@ -1,7 +1,7 @@
 <template>
     <v-container class="container-books">
         <v-row>
-            <v-col v-if="showFilters" cols="12" sm="4" md="3" lg="3">
+            <v-col cols="12" sm="4" md="3" lg="3">
                 <v-navigation-drawer permanent class="drawer">
 
 
@@ -19,8 +19,8 @@
                                     <v-list-item-subtitle class="navigation-subtitle">{{ item.text
                                         }}</v-list-item-subtitle>
                                 </v-list-item-content>
-                                <v-list-item-icon @click="handleSort(item.value)">
-                                    <v-icon v-if="sortBy === item.value" small>{{ orderAsc ? 'mdi-arrow-up' :
+                                <v-list-item-icon>
+                                    <v-icon v-if="getSortBy === item.value" small>{{ getOrderAsc ? 'mdi-arrow-up' :
                                         'mdi-arrow-down' }}</v-icon>
                                 </v-list-item-icon>
                             </v-list-item>
@@ -35,21 +35,29 @@
                             </v-list-item-content>
                         </v-list-item>
                         <v-divider></v-divider>
-                        <v-list-item-subtitle v-for="book in PopularAuthors" :key="book.author">
+
+                        <v-list-item-subtitle v-for="book in mostPopularAuthors" :key="book.author">
                             <v-checkbox v-model="selectedAuthors" :value="book.author" class="checkbox-subtitle"
-                                hide-details>
+                                hide-details @change="onAuthorCheckboxChange">
                                 <template v-slot:label>
                                     <span class="sort-text">{{ book.author }}</span>
                                     <span class="book-count">{{ book.count }}</span>
                                 </template>
                             </v-checkbox>
                         </v-list-item-subtitle>
-                        <v-text-field class="search-author" placeholder="Введите фамилию" hide-details v-model="search"
-                            @input="searchBooks">
-                            <template v-slot:append>
-                                <v-icon small>mdi-magnify</v-icon>
+
+
+                        <v-autocomplete class="search-author" :items="getPopularAuthors" item-value="author"
+                            item-text="author" hide-details clearable chips multiple variant="outlined"
+                            menu-props="{ maxHeight: '400px' }" v-model="searchQuery">
+                            <template v-slot:item="{ item }">
+                                <v-list-item @click="selectAuthor(item.author)" class="autocomplete-author">
+                                    <v-list-item-content>
+                                        <v-list-item-title>{{ item.author }}</v-list-item-title>
+                                    </v-list-item-content>
+                                </v-list-item>
                             </template>
-                        </v-text-field>
+                        </v-autocomplete>
                     </v-list>
 
 
@@ -63,7 +71,7 @@
 
 
                         <v-list-item-subtitle v-for="book in firstFiveYears" :key="book.year">
-                            <v-checkbox v-model="selectedYears" :value="book.year" class="checkbox-subtitle"
+                            <v-checkbox v-model="getSelectedYears" :value="book.year" class="checkbox-subtitle"
                                 hide-details>
                                 <template v-slot:label>
                                     <span class="sort-text">{{ book.year }}</span>
@@ -73,13 +81,13 @@
                         </v-list-item-subtitle>
 
 
-                        <v-select v-model="selectedRemainingYears" :items="remainingYears" item-value="year"
+                        <v-select v-model="getSelectedRemainingYears" :items="remainingYears" item-value="year"
                             item-text="year" :placeholder="'Еще ' + remainingYears.length + '...'" multiple
                             class="year-select">
                             <template v-slot:item="{ item }">
                                 <v-list-item-content>
                                     <v-list-item-title>
-                                        <v-checkbox v-model="selectedRemainingYears" :value="item.year" hide-details >
+                                        <v-checkbox v-model="getSelectedRemainingYears" :value="item.year" hide-details>
                                             <template v-slot:label>
                                                 <span class="sort-text">{{ item.year }}</span>
                                                 <span class="book-count">{{ item.count }}</span>
@@ -93,10 +101,9 @@
                 </v-navigation-drawer>
             </v-col>
 
-
             <v-col cols="12" sm="8" md="9" lg="9">
                 <v-row>
-                    <v-col v-for="book in searchhandler" :key="book.id" cols="12" sm="6" md="4" lg="4">
+                    <v-col v-for="book in getBooks" :key="book.id" cols="12" sm="6" md="4" lg="4">
                         <v-card>
                             <div id="discount-button" v-if="book.priceOld > book.priceNew"
                                 class="text-left font-weight-regular text-xs">
@@ -143,7 +150,7 @@
 
 
         <div class="pagination">
-            <span v-if="currentPage > 1" class="pagination-item" @click="handlePageChange(currentPage - 1)">
+            <span v-if="getCurrentPage > 1" class="pagination-item" @click="handlePageChange(getCurrentPage - 1)">
                 &laquo;
             </span>
 
@@ -153,7 +160,8 @@
                 {{ page }}
             </span>
 
-            <span v-if="currentPage < totalPages" class="pagination-item" @click="handlePageChange(currentPage + 1)">
+            <span v-if="getCurrentPage < totalPages" class="pagination-item"
+                @click="handlePageChange(getCurrentPage + 1)">
                 &raquo;
             </span>
         </div>
@@ -161,13 +169,12 @@
 </template>
 
 <script>
-import booksService from "@/services/books.service.js";
+import { mapGetters, mapActions, mapMutations } from 'vuex';
+
 
 export default {
     data() {
         return {
-            currentPage: 1,
-            booksQuantity: 60,
             sortItems: [
                 { text: 'По названию', value: 'title' },
                 { text: 'По автору', value: 'author' },
@@ -177,44 +184,37 @@ export default {
                 { text: 'Скидке', value: 'discount' },
                 { text: 'Дате обновления', value: 'updated_at' },
             ],
-            sortBy: 'title',
-            orderAsc: true,
-            loading: false,
-            search: '',
-            selectedSort: '',
-
-            showFilters: true,
-
-            books: [],  // Наполнение списка книг с бека
-
-            PopularAuthors: [],  // Наполнение списка авторов с бека
-            selectedAuthors: [],  // Выбранные авторы
-
-            publishingYear: [], // Наполнение списка с бека
-            selectedYears: [], // Годы, выбранные в основном списке
-            selectedRemainingYears: [], // Годы, выбранные в раскрывающемся списке
+            selectedAuthors: [],
+            searchQuery: '',
         }
     },
     created() {
-        this.fetchBooks();
+        this.setQueryParamsToState();
+        // this.fetchBooks();
+        this.loadFilteringsBooks()
         this.loadPopularAuthors();
-        this.loadPublishingYear();
+        this.loadPublishingYears();
     },
     computed: {
+        ...mapGetters('books', ['getBooks', 'getLoadings', 'getCurrentPage', 'getBooksQuantity', 'getSortBy', 'getOrderAsc', 'getbooksQuantity']),
+        ...mapGetters('filters', ['getPopularAuthors', 'getPublishingYears', 'getSelectedAuthors', 'getSelectedYears', 'getSelectedRemainingYears', 'getFilteredBooks', 'getSearchebleBooks']),
         totalPages() {
-            return this.books.length === this.booksQuantity ? Math.ceil(38483 / this.booksQuantity) : Math.ceil(this.books.length / this.booksQuantity);
+            return this.getBooks.length === this.getBooksQuantity ? Math.ceil(33974 / this.getBooksQuantity) : Math.floor(this.getBooks.length / this.getBooksQuantity);
         },
         currentPageFromRoute() {
-            return parseInt(this.$route.query.page) || this.$route.params.page + 1 || this.currentPage;
-        },
-        searchhandler() {
-            return this.books.filter(book => book.title.toLowerCase().includes(this.search.toLowerCase()));
+            return parseInt(this.$route.query.page) || this.getCurrentPage;
         },
         paginatedPages() {
             const pages = [];
-            const total = this.totalPages;
             const current = this.currentPageFromRoute;
+            let total;
 
+            if (this.getSelectedAuthors.length > 0) {
+                total = Math.ceil(this.getSearchebleBooks / this.getbooksQuantity);
+            } else {
+
+                total = this.totalPages;
+            }
             for (let i = Math.max(current - 3, 1); i <= Math.min(current + 3, total); i++) {
                 pages.push(i);
             }
@@ -227,75 +227,84 @@ export default {
             }
 
             return pages;
+
         },
         firstFiveYears() {
-            return this.publishingYear.slice(0, 5);
+            return this.getPublishingYears.slice(0, 5);
+
         },
         remainingYears() {
-            return this.publishingYear.slice(5);
+            return this.getPublishingYears.slice(5);
         },
+        mostPopularAuthors() {
+            return this.getPopularAuthors.slice(0, 5);
+        }
+
+
+
     },
     methods: {
-        async fetchBooks() {
-            try {
-                this.loading = true;
-                const page = this.currentPageFromRoute;
-                const bookData = {
-                    page: page,
-                    books_quantity: this.booksQuantity,
-                    sort_by: this.sortBy,
-                    order_asc: this.orderAsc
-                };
-                console.log(bookData);
-
-                const response = await booksService.getBooks(bookData);
-
-                if (parseInt(this.$route.params.page || 1) !== this.currentPage) {
-                    this.$router.push({
-                        name: 'home-page',
-                        query: { page: this.currentPage }
-                    });
-                }
-
-                this.books = response.data;
-                this.windowScroll();
-            } catch (error) {
-                console.error(error.message);
-            } finally {
-                this.loading = false;
-            }
-        },
-        async loadPopularAuthors() {
-            try {
-                const count = { count: 5 };
-                const response = await booksService.getMostPopularauthors(count);
-                this.PopularAuthors = response.data;
-            } catch (error) {
-                console.error('Failed to load popular authors:', error);
-            }
-        },
-        async loadPublishingYear() {
-            try {
-                const count = { count: 30 };
-                const response = await booksService.getPublishingYears(count);
-                this.publishingYear = response.data;
-            } catch (error) {
-                console.error('Failed to load popular publishing year:', error);
-            }
-        },
-        async searchBooks() {
-            const bookData = { title: this.search };
-            const response = await booksService.searchBooks(bookData);
-            this.books = response.data;
-        },
-        handleSort(sortBy) {
-            if (this.sortBy === sortBy) {
-                this.orderAsc = !this.orderAsc;
+        ...mapActions('books', ['fetchBooks']),
+        ...mapActions('filters', ['loadPopularAuthors', 'loadPublishingYears', 'loadFilteringsBooks',]),
+        ...mapMutations('books', ['SET_CURRENT_PAGE', 'SET_SORT_BY', 'SET_ORDER_ASC']),
+        ...mapMutations('filters', ['SET_SELECTED_AUTHORS']),
+        updateRoute() {
+            if (this.getSelectedAuthors.length == 0) {
+                this.$router.push({
+                    name: 'home-page',
+                    params: {
+                        sort_by: this.getSortBy,
+                        order_asc: this.getOrderAsc,
+                        page: this.getCurrentPage,
+                    }
+                });
             } else {
-                this.sortBy = sortBy;
-                this.orderAsc = true;
+                this.$router.push({
+                    name: 'home-page',
+                    params: {
+                        sort_by: this.getSortBy,
+                        order_asc: this.getOrderAsc,
+                        authors: this.getSelectedAuthors.join(','),
+                        page: this.getCurrentPage,
+                    }
+                });
             }
-            this.fetchBooks();
+
+        },
+        setQueryParamsToState() {
+            const { sort_by, order_asc, page, authors } = this.$route.params;
+            if (sort_by) {
+                this.SET_SORT_BY(sort_by);
+            }
+            if (order_asc !== undefined) {
+                this.SET_ORDER_ASC(order_asc === 'true');
+            }
+            if (page) {
+                this.SET_CURRENT_PAGE(parseInt(page));
+            }
+            if (authors) {
+                this.SET_SELECTED_AUTHORS(authors.split(','));
+               
+            }
+        },
+        handleSort(value) {
+            if (this.getSortBy === value) {
+                this.SET_ORDER_ASC(!this.getOrderAsc);
+
+            } else {
+                this.SET_SORT_BY(value);
+                this.SET_ORDER_ASC(true);
+            }
+            if (this.getSelectedAuthors.length >= 1) {
+                this.loadFilteringsBooks()
+                this.updateRoute()
+            } else {
+                this.fetchBooks();
+                this.updateRoute()
+            }
+
+
+
         },
         windowScroll() {
             window.scrollTo({
@@ -304,11 +313,35 @@ export default {
             });
         },
         handlePageChange(page) {
-            if (page !== this.currentPage) {
-                this.currentPage = page;
-                this.fetchBooks();
+            if (page !== this.getCurrentPage) {
+                this.SET_CURRENT_PAGE(page);
+                // if (parseInt(this.$route.query.page || 1) !== this.getCurrentPage) {
+                //     this.updateRoute();
+                // }
+                if (this.selectedAuthors.length >= 1) {
+                    this.updateRoute();
+                    this.loadFilteringsBooks();
+                } else {
+                    this.updateRoute();
+                    this.fetchBooks();
+                }
+                this.windowScroll();
             }
-        }
+        },
+        selectAuthor(author) {
+            if (!this.selectedAuthors.includes(author)) {
+                this.selectedAuthors.push(author);
+                this.onAuthorCheckboxChange()
+            }
+
+        },
+        onAuthorCheckboxChange() {
+            this.SET_SELECTED_AUTHORS(this.selectedAuthors);
+            this.updateRoute();
+            this.loadFilteringsBooks()
+            this.searchQuery = ''
+        },
+
     },
 }
 </script>
@@ -351,6 +384,13 @@ export default {
     margin-top: 2px;
 }
 
+.autocomplete-author {
+    font-size: 0.9rem;
+    text-align: start;
+    color: black;
+    margin-right: 5px;
+}
+
 .container-books {
     max-width: 1400px;
     margin-left: auto;
@@ -371,6 +411,11 @@ export default {
     width: 90%;
     padding: 8px;
     margin-left: 5px;
+}
+
+.bth-search:hover {
+    color: #000;
+    cursor: pointer;
 }
 
 

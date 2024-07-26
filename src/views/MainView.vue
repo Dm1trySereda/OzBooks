@@ -123,6 +123,7 @@ export default {
         handleHome() {
             if (this.$route.name !== 'home') {
                 this.$router.push({ name: 'home' });
+                window.location.reload();
             }
         },
         handleLogin() {
