@@ -102,8 +102,7 @@
 
 <script>
 import localStorageService from "@/services/local-storage.service.js";
-import booksService from "@/services/books.service.js";
-import { mapMutations } from 'vuex';
+import { mapActions, mapMutations } from 'vuex';
 export default {
     data: () => ({
         icons: [
@@ -117,17 +116,18 @@ export default {
         search: ''
     }),
     methods: {
+        ...mapActions('books', ['searchBookForTitle', 'fetchBooks']),
+        ...mapMutations('books', ['SET_BOOK_TITLE', 'SET_FILTERS']),
         ...mapMutations({
             setBooks: 'setBooks',
         }),
         handleHome() {
-            if (this.$route.name !== 'home') {
-                this.$router.push({ name: 'home' });
-                window.location.reload();
-            }
+            this.$router.push({ name: 'home' });
+            window.location.reload();
+
         },
         handleLogin() {
-            if (!localStorageService.getToken() || !localStorageService.getGoogleAccess()) {
+            if (!localStorageService.getToken() || !localStorageService.getGoogleAccessToken()) {
                 this.$router.push({ name: 'login' });
             }
 
@@ -141,26 +141,21 @@ export default {
             this.authorized = false
         },
         handleProfile() {
-            if (!localStorageService.getToken() || !localStorageService.getGoogleAccess()) {
+            if (!localStorageService.getToken() || !localStorageService.getGoogleAccessToken()) {
                 this.$router.push({ name: 'my-profile' });
             }
 
         },
         async searchBooks() {
-            try {
-                const bookData = {
-                    title: this.search,
-                };
-                const response = await booksService.searchBooks(bookData);
-                if (response.status === 200) {
-                    this.books = response.data
-                    // Обновляем список книг в Vuex
-                    this.setBooks(response.data);
-                }
-
-            } catch (error) {
-                console.error(error.message);
+            if (this.search.length > 4) {
+                this.SET_BOOK_TITLE(this.search)
+                this.searchBookForTitle()
+            } else if (this.search.length == 0) {
+                this.SET_BOOK_TITLE(this.search)
+                this.SET_FILTERS(true)
+                this.fetchBooks()
             }
+
 
         },
     },

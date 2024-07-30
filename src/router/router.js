@@ -5,7 +5,6 @@ import loginRouter from "./routes/loginRouter";
 import userRouter from "./routes/userRouter";
 import checkAuthentication from "@/services/check-auth.service.js";
 import MainView from "../views/MainView.vue";
-
 const routes = [
   ...loginRouter,
   {
@@ -14,22 +13,21 @@ const routes = [
     component: MainView,
     children: [
       {
+        title: "Главная страница без фильтров",
         path: "/home",
         name: "home",
         component: HomePage,
       },
       {
-        path: "/home/sort=:sort_by?/order_asc=:order_asc?/authors=:authors?/page=:page?",
+        title: "Главная страница с фильтрами",
+        path: "/home//",
         name: "home-page",
         component: HomePage,
       },
       ...userRouter,
     ],
   },
-  {
-    path: "*",
-    component: NotFound404,
-  },
+  { title: "Страница не найдена", path: "*", component: NotFound404 },
 ];
 
 const router = new VueRouter({
@@ -39,6 +37,6 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   checkAuthentication(to, from, next);
+  router.app.$store.dispatch("routes/updateHistoryRoute", from);
 });
-
 export default router;

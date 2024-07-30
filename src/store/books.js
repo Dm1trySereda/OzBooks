@@ -5,10 +5,12 @@ const books = {
   state: {
     books: [],
     loading: false,
+    filters: true,
     currentPage: 1,
     booksQuantity: 50,
     sortBy: "title",
     orderAsc: true,
+    bookTitle: "",
   },
   mutations: {
     SET_BOOKS(state, books) {
@@ -16,6 +18,9 @@ const books = {
     },
     SET_LOADING(state, loading) {
       state.loading = loading;
+    },
+    SET_FILTERS(state, filters) {
+      state.filters = filters;
     },
     SET_CURRENT_PAGE(state, page) {
       state.currentPage = page;
@@ -25,6 +30,9 @@ const books = {
     },
     SET_ORDER_ASC(state, orderAsc) {
       state.orderAsc = orderAsc;
+    },
+    SET_BOOK_TITLE(state, bookTitle) {
+      state.bookTitle = bookTitle;
     },
   },
   actions: {
@@ -38,8 +46,6 @@ const books = {
           order_asc: state.orderAsc,
           ...filters,
         };
-        console.log(bookData);
-
         const response = await booksService.getBooks(bookData);
         commit("SET_BOOKS", response.data);
       } catch (error) {
@@ -48,13 +54,26 @@ const books = {
         commit("SET_LOADING", false);
       }
     },
-    updateBooks({ commit }, books) {
-      commit("SET_BOOKS", books);
+    async searchBookForTitle({ commit, state }) {
+      try {
+        commit("SET_LOADING", true);
+        commit("SET_FILTERS", false);
+        const bookData = {
+          title: state.bookTitle,
+        };
+        const response = await booksService.searchBooks(bookData);
+        commit("SET_BOOKS", response.data);
+      } catch (error) {
+        console.error(error.message);
+      } finally {
+        commit("SET_LOADING", false);
+      }
     },
   },
   getters: {
     getBooks: (state) => state.books,
     getLoadings: (state) => state.loading,
+    getFilters: (state) => state.filters,
     getCurrentPage: (state) => state.currentPage,
     getBooksQuantity: (state) => state.booksQuantity,
     getSortBy: (state) => state.sortBy,

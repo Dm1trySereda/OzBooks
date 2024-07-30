@@ -65,10 +65,30 @@
                 </g>
             </svg>
         </div>
-        <router-link id="home" :to="{ name: 'home' }">Назад</router-link>
+        <a class="go-back" @click="GoBack">Назад</a>
 
     </div>
 </template>
+<script>
+import { mapGetters, mapActions } from 'vuex';
+export default {
+    computed: {
+        ...mapGetters('routes', ['getHistoryRoute']),
+    },
+    methods: {
+        ...mapActions('routes', ['updateHistoryRoute', 'removeLastRoute']),
+        GoBack() {
+            if (this.getHistoryRoute.length > 0) {
+                const lastRoute = this.getHistoryRoute[this.getHistoryRoute.length - 1];
+                this.$router.push(lastRoute.fullPath)
+            } else {
+                this.$router.push({ name: 'home' })
+            }
+        }
+    }
+
+}
+</script>
 <style>
 #home {
     text-decoration-line: none;
@@ -185,5 +205,9 @@
     }
 
 
+}
+
+.go-back {
+    text-decoration-line: none;
 }
 </style>

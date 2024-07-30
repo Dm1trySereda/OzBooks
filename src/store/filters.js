@@ -7,7 +7,6 @@ const filters = {
     publishingYears: [],
     selectedAuthors: [],
     selectedYears: [],
-    selectedRemainingYears: [],
     searchableBooks: [],
   },
   mutations: {
@@ -23,9 +22,6 @@ const filters = {
     SET_SELECTED_YEARS(state, years) {
       state.selectedYears = years;
     },
-    SET_SELECTED_REMAINING_YEARS(state, years) {
-      state.selectedRemainingYears = years;
-    },
     SET_SEARHCERBLE_BOOKS(state, booksList) {
       state.searchableBooks = booksList;
     },
@@ -40,35 +36,38 @@ const filters = {
         console.error("Failed to load popular authors:", error);
       }
     },
-    async loadPublishingYears({ commit }) {
+    async loadPublishingYears({ state, commit }) {
       try {
-        const count = { count: 30 };
-        const response = await booksService.getPublishingYears(count);
-        commit("SET_PUBLISHING_YEARS", response.data);
+        if (state.selectedAuthors.length == 0) {
+          const count = { count: 30 };
+          const response = await booksService.getPublishingYears(count);
+          commit("SET_PUBLISHING_YEARS", response.data);
+        }
       } catch (error) {
         console.error("Failed to load popular publishing year:", error);
       }
     },
-    async loadFilteringsBooks({ state,commit, dispatch }) {
+    async loadFilteringsBooks({ state, commit, dispatch }) {
       try {
-        // Очищаем список авторов от ненужных свойств
-        const cleanedAuthors = state.selectedAuthors
-          .map((author) => {
-            if (typeof author === "object" && author !== null) {
-              return author.author || "";
-            }
-            return author || "";
-          })
-          .filter(
-            (author) => typeof author === "string" && author.trim() !== ""
-          );
-        const filters = {
-          authors: cleanedAuthors,
-        };
-        await dispatch("books/fetchBooks", filters, { root: true });
-        const response = await booksService.searchBooks(filters);
-        console.log(response.data);
-        commit("SET_SEARHCERBLE_BOOKS", response.data.length);
+        const filters = {};
+        if (state.selectedAuthors.length > 0) {
+          filters.authors = cleanedFilters(state.selectedAuthors);
+        }
+
+        if (state.selectedYears.length > 0) {
+          filters.years = cleanedFilters(state.selectedYears);
+        }
+        if (Object.keys(filters).length > 0) {
+          await dispatch("books/fetchBooks", filters, { root: true });
+          const response = await booksService.searchBooks(filters);
+          commit("SET_SEARHCERBLE_BOOKS", response.data.length);
+          if (filters.authors) {
+            const years = countYears(response.data.map((book) => book.year));
+            commit("SET_PUBLISHING_YEARS", years);
+          }
+        } else {
+          await dispatch("books/fetchBooks", {}, { root: true });
+        }
       } catch (error) {
         console.error("Failed to load filtered books:", error);
       }
@@ -79,10 +78,38 @@ const filters = {
     getPublishingYears: (state) => state.publishingYears,
     getSelectedAuthors: (state) => state.selectedAuthors,
     getSelectedYears: (state) => state.selectedYears,
-    getSelectedRemainingYears: (state) => state.selectedRemainingYears,
     getFilteredBooks: (state) => state.filteredBooks,
     getSearchebleBooks: (state) => state.searchableBooks,
   },
 };
+function cleanedFilters(array) {
+  const cleanedArray = array
+    .map((value) => {
+      if (typeof value === "object" && value !== null) {
+        return value.author || value.years || "";
+      }
+      return value;
+    })
+    .filter((value) => {
+      if (typeof value === "string") {
+        return value.trim() !== "";
+      }
+      if (typeof value === "number") {
+        return !isNaN(value);
+      }
+      return false;
+    });
+  return cleanedArray;
+}
+function countYears(yearsArray) {
+  const yearsCount = {};
+  yearsArray.forEach((year) => {
+    yearsCount[year] = (yearsCount[year] || 0) + 1;
+  });
+  const resultArray = Object.entries(yearsCount).map(([year, count]) => {
+    return { year: parseInt(year), count: count };
+  });
 
+  return resultArray;
+}
 export default filters;

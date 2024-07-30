@@ -35,7 +35,7 @@ class ApiService {
         return response;
       },
       (error) => {
-        if (error.response && error.response.status === 403) {
+        if (error.response && error.response.status === 403 || error.response.status === 401) {
           console.log("Error: " + error.response.status);
           localStorageService.clearToken();
           checkAuthentication(router.currentRoute, null, (nextRoute) => {
